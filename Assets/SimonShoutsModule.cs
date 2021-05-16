@@ -1,6 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using KModkit;
 using SimonShouts;
 using UnityEngine;
@@ -43,6 +45,7 @@ public class SimonShoutsModule : MonoBehaviour
     private Dictionary<int, Movement> _optimalMovements;
     private bool[] _valid;
     private bool _isSolved = false;
+    private bool _solveAnimationDone = false;
     private Coroutine _squareFlash;
 
     string positionToGridColors(int pos)
@@ -92,7 +95,7 @@ public class SimonShoutsModule : MonoBehaviour
         if (!_optimalMovements.ContainsKey(_curPosition))
             goto tryAgain;
 
-        var solutionPath = getSolutionPath();
+        var solutionPath = getSolutionPath(_curPosition);
         if (solutionPath.Length < 3 || solutionPath.Length > 5)
             goto tryAgain;
 
@@ -148,7 +151,7 @@ public class SimonShoutsModule : MonoBehaviour
             }
             else
             {
-                Debug.LogFormat(@"[Simon Shouts #{0}] Possible solution: {1}", _moduleId, getSolutionPath());
+                Debug.LogFormat(@"[Simon Shouts #{0}] Possible solution: {1}", _moduleId, getSolutionPath(newPos));
             }
             setPosition(newPos, _isSolved);
             Audio.PlaySoundAtTransform("ButtonSound" + (btn + 1), transform);
@@ -164,6 +167,18 @@ public class SimonShoutsModule : MonoBehaviour
         _squareFlash = StartCoroutine(SetSquares(solved));
     }
 
+    struct AnimationInfo
+    {
+        public double Time { get; private set; }
+        public int Bits { get; private set; }
+
+        public AnimationInfo(double time, int bits) : this()
+        {
+            Time = time;
+            Bits = bits;
+        }
+    }
+
     IEnumerator SetSquares(bool solved)
     {
         for (var i = 0; i < 4; i++)
@@ -175,28 +190,42 @@ public class SimonShoutsModule : MonoBehaviour
 
         if (solved)
         {
-            yield return new WaitForSeconds(.16f);
+            yield return new WaitForSeconds(.5f);
             Audio.PlaySoundAtTransform("SolveSound", transform);
-            var animation = "124812481111AAAA44440000FFFF0";
-            var solveAt = animation.IndexOf('F');
+            var animation = Ut.NewArray(
+                new AnimationInfo(.703, 0x1),
+                new AnimationInfo(.913, 0x0),
+                new AnimationInfo(.994, 0xa),
+                new AnimationInfo(1.20, 0x0),
+                new AnimationInfo(1.31, 0x4),
+                new AnimationInfo(1.55, 0x0),
+                new AnimationInfo(2.00, 0xf),
+                new AnimationInfo(2.28, 0x0));
 
-            for (var i = 0; i < animation.Length; i++)
+            var elapsed = 0f;
+            var hasSolved = false;
+            while (elapsed < animation.Last().Time)
             {
-                var b = animation[i] >= 'A' ? animation[i] - 'A' + 10 : animation[i] - '0';
+                elapsed += Time.deltaTime;
+                var index = animation.LastIndexOf(an => an.Time < elapsed);
+                var bits = index == -1 ? (1 << (int) ((elapsed / .08) % 4)) : animation[index].Bits;
                 for (var btn = 0; btn < 4; btn++)
-                    ButtonLights[btn].SetActive((b & (1 << btn)) != 0);
-                if (i == solveAt)
+                    ButtonLights[btn].SetActive((bits & (1 << btn)) != 0);
+                if (elapsed >= 2 && !hasSolved)
+                {
                     Module.HandlePass();
-                yield return new WaitForSeconds(.05f);
+                    hasSolved = true;
+                    _solveAnimationDone = true;
+                }
+                yield return null;
             }
         }
 
         _squareFlash = null;
     }
 
-    string getSolutionPath()
+    string getSolutionPath(int position)
     {
-        var position = _curPosition;
         var solution = new List<char>();
         while (position != _goalPosition)
         {
@@ -219,5 +248,34 @@ public class SimonShoutsModule : MonoBehaviour
         }
         for (var i = 0; i < ButtonLights.Length; i++)
             ButtonLights[i].SetActive(false);
+    }
+
+#pragma warning disable 0414
+    private readonly string TwitchHelpMessage = "!{0} press UDLR [up/down/left/right]";
+#pragma warning restore 0414
+
+    IEnumerator ProcessTwitchCommand(string command)
+    {
+        var m = Regex.Match(command, @"^\s*(?:(?:press|submit)\s+)?((?:[udlrtb]\s*)*)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        if (!m.Success)
+            yield break;
+        yield return null;
+        foreach (var ix in m.Groups[1].Value.Select(ch => "URDLT,B,urdlt,b,".IndexOf(ch) % 4).Where(ix => ix != -1))
+        {
+            yield return new[] { Buttons[ix] };
+            yield return new WaitForSeconds(.2f);
+        }
+    }
+
+    IEnumerator TwitchHandleForcedSolve()
+    {
+        var solution = getSolutionPath(_curPosition);
+        foreach (var ltr in solution)
+        {
+            Buttons[Array.IndexOf(_flashingLetters, ltr - 'A')].OnInteract();
+            yield return new WaitForSeconds(.2f);
+        }
+        while (!_solveAnimationDone)
+            yield return null;
     }
 }

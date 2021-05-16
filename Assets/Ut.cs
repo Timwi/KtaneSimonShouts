@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace SimonShouts
 {
@@ -23,6 +24,23 @@ namespace SimonShouts
             for (int i = 0; i < size; i++)
                 result[i] = initialiser(i);
             return result;
+        }
+
+        public static T[] NewArray<T>(params T[] array) { return array; }
+
+        public static int LastIndexOf<T>(this IEnumerable<T> source, Func<T, bool> predicate)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            var i = 0;
+            var found = -1;
+            foreach (var elem in source)
+            {
+                if (predicate(elem))
+                    found = i;
+                i++;
+            }
+            return found;
         }
     }
 }
