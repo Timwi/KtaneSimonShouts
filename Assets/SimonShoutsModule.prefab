@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 11489324}
   - component: {fileID: 11496072}
   - component: {fileID: 11489182}
+  - component: {fileID: 114614424698722798}
   m_Layer: 0
   m_Name: SimonShoutsModule
   m_TagString: Untagged
@@ -258,6 +259,7 @@ MonoBehaviour:
   Bomb: {fileID: 11489324}
   Module: {fileID: 11429752}
   Audio: {fileID: 11496072}
+  RuleSeedable: {fileID: 114614424698722798}
   Squares:
   - {fileID: 23585263297340530}
   - {fileID: 23266681146718138}
@@ -1736,6 +1738,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   HighlightScale: {x: 1, y: 1, z: 1}
   OutlineAmount: 0
+--- !u!114 &114614424698722798
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 127088}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adf69c2de51bd3c43bbd9bc22578ee08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _seed: 1
 --- !u!114 &114652154716127110
 MonoBehaviour:
   m_ObjectHideFlags: 1
