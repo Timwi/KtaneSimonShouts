@@ -19,6 +19,7 @@ public class SimonShoutsModule : MonoBehaviour
     public KMBombModule Module;
     public KMAudio Audio;
     public KMRuleSeedable RuleSeedable;
+    public KMColorblindMode ColorblindMode;
 
     public MeshRenderer[] Squares;
     public Material[] SquareMaterials;
@@ -27,6 +28,8 @@ public class SimonShoutsModule : MonoBehaviour
     public KMSelectable[] Buttons;
     public MeshRenderer[] ButtonRenderers;
     public Material[] ButtonMaterials;
+    public TextMesh[] ColorblindSquares;
+    public TextMesh[] ColorblindButtons;
 
     private static readonly bool[][] _morse = "# ###,### # # #,### # ### #,### # #,#,# # ### #,### ### #,# # # #,# #,# ### ### ###,### # ###,# ### # #,### ###,### #,### ### ###,# ### ### #,### ### # ###,# ### #,# # #,###,# # ###,# # # ###,# ### ###,### # # ###,### # ### ###,### ### # #"
         .Split(',')
@@ -45,6 +48,7 @@ public class SimonShoutsModule : MonoBehaviour
     private bool _isSolved = false;
     private bool _solveAnimationDone = false;
     private Coroutine _squareFlash;
+    private bool _colorblindMode;
 
     // Rule-related (varies with rule seed)
     private int _buttonRotation;
@@ -81,6 +85,7 @@ public class SimonShoutsModule : MonoBehaviour
     public void Start()
     {
         _moduleId = _moduleIdCounter++;
+        setColorblindMode(ColorblindMode.ColorblindModeActive);
 
         // RULE SEED
         var rnd = RuleSeedable.GetRNG();
@@ -179,8 +184,13 @@ public class SimonShoutsModule : MonoBehaviour
         Debug.LogFormat(@"[Simon Shouts #{0}] Possible solution: {1}", _moduleId, solutionPath.Select(dBpos => _diagramB[dBpos]).Join(""));
 
         var goalColors = positionToGridColors(_goalPosition);
+        var colorNames = "RED!,GREEN!,BLUE!,YELLOW!".Split(',');
         for (var i = 0; i < 4; i++)
-            ButtonRenderers[(i + _buttonRotation) % 4].sharedMaterial = ButtonMaterials["RGBY".IndexOf(goalColors[i])];
+        {
+            var color = "RGBY".IndexOf(goalColors[i]);
+            ButtonRenderers[(i + _buttonRotation) % 4].sharedMaterial = ButtonMaterials[color];
+            ColorblindButtons[(i + _buttonRotation) % 4].text = colorNames[color];
+        }
 
         Module.OnActivate += delegate { StartCoroutine(Flash()); };
         for (var btn = 0; btn < Buttons.Length; btn++)
@@ -189,6 +199,15 @@ public class SimonShoutsModule : MonoBehaviour
         var scalar = transform.lossyScale.x;
         for (var i = 0; i < ButtonLights.Length; i++)
             ButtonLights[i].GetComponent<Light>().range *= scalar;
+    }
+
+    private void setColorblindMode(bool active)
+    {
+        _colorblindMode = active;
+        foreach (var t in ColorblindButtons)
+            t.gameObject.SetActive(active);
+        foreach (var t in ColorblindSquares)
+            t.gameObject.SetActive(active);
     }
 
     private KMSelectable.OnInteractHandler buttonPress(int btn)
@@ -255,11 +274,17 @@ public class SimonShoutsModule : MonoBehaviour
     IEnumerator SetSquares(bool solved)
     {
         for (var i = 0; i < 4; i++)
+        {
             Squares[(i + _squareRotation) % 4].sharedMaterial = GraySquareMaterial;
+            ColorblindSquares[i].text = "";
+        }
         yield return new WaitForSeconds(.08f);
         var colors = positionToGridColors(_curPosition);
         for (var i = 0; i < 4; i++)
+        {
             Squares[(i + _squareRotation) % 4].sharedMaterial = SquareMaterials["RGBY".IndexOf(colors[i])];
+            ColorblindSquares[(i + _squareRotation) % 4].text = colors.Substring(i, 1) + "!";
+        }
 
         if (solved)
         {
@@ -328,11 +353,18 @@ public class SimonShoutsModule : MonoBehaviour
     }
 
 #pragma warning disable 0414
-    private readonly string TwitchHelpMessage = "!{0} press UDLR [up/down/left/right]";
+    private readonly string TwitchHelpMessage = "!{0} press UDLR [up/down/left/right] | !{0} colorblind";
 #pragma warning restore 0414
 
     IEnumerator ProcessTwitchCommand(string command)
     {
+        if (Regex.IsMatch(command, @"^\s*colorblind\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
+            setColorblindMode(!_colorblindMode);
+            yield return null;
+            yield break;
+        }
+
         var m = Regex.Match(command, @"^\s*(?:(?:press|submit)\s+)?((?:[udlrtb]\s*)*)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         if (!m.Success)
             yield break;
