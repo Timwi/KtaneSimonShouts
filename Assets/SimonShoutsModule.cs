@@ -84,6 +84,7 @@ public class SimonShoutsModule : MonoBehaviour
 
         // RULE SEED
         var rnd = RuleSeedable.GetRNG();
+        Debug.LogFormat(@"[Simon Shouts #{0}] Using rule seed: {1}.", _moduleId, rnd.Seed);
         if (rnd.Seed == 1)
         {
             setTorus(0, 0, new[] { 'R', 'G', 'Y', 'B' }, 0, 0, false, false, false);
