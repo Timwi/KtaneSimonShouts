@@ -132,7 +132,7 @@ public class SimonShoutsModule : MonoBehaviour
 
             var alphabet = new[] { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };
             rnd.ShuffleFisherYates(alphabet);
-            _diagramB = new string(alphabet);
+            _diagramB = new string(alphabet).Substring(0, 24);
         }
 
         tryAgain:
