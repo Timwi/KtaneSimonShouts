@@ -54,6 +54,7 @@
      <Compile Include="Assets\Editor\Scripts\AssetBundler.cs" />
      <Compile Include="Assets\Editor\Scripts\EdgeworkConfigurationEditor.cs" />
      <Compile Include="Assets\Editor\Scripts\KMModuleEditor.cs" />
+     <Compile Include="Assets\Editor\Scripts\Missions\DMGMissionLoader.cs" />
      <Compile Include="Assets\Editor\Scripts\Missions\KMMissionEditor.cs" />
      <Compile Include="Assets\Editor\Scripts\Missions\KMMissionTableOfContentsEditor.cs" />
      <Compile Include="Assets\Editor\Scripts\Missions\TableOfContentsSectionList.cs" />
