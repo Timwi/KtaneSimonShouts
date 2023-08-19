@@ -1,4 +1,6 @@
-﻿using UnityEditor;
+﻿#pragma warning disable 436
+
+using UnityEditor;
 using Steamworks;
 using UnityEngine;
 using System.IO;
@@ -35,7 +37,7 @@ public class WorkshopEditorWindow : EditorWindow
         Debug.LogWarning(pchDebugText);
     }
 
-    [MenuItem("Keep Talking ModKit/Steam Workshop Tool _#F6", priority = 20)]
+    [MenuItem("Keep Talking ModKit/Steam Workshop Tool _#F5", priority = 20)]
     protected static void ShowWindow()
     {
         WorkshopEditorWindow window = EditorWindow.GetWindow<WorkshopEditorWindow>("Workshop");
@@ -143,9 +145,9 @@ public class WorkshopEditorWindow : EditorWindow
                 EditorGUILayout.HelpBox("Change notes must be entered before publishing to Workshop", MessageType.Warning);
             }
             
-            if(dir.GetFiles("modInfo_Harmony.json").Length > 0)
+            if(dir.Exists && dir.GetFiles("modInfo_Harmony.json").Length > 0)
 			{
-				EditorGUILayout.HelpBox("Your mod uses the Harmony library. This means it won't work without the Harmony mod, so on the Workshop, please either add the Harmony mod as a dependency or mention it in the description!", MessageType.Warning);
+				EditorGUILayout.HelpBox("Your mod uses the Harmony library. This means it won't work without the Tweaks mod, so on the Workshop, please either add Tweaks as a dependency or mention it in the description!", MessageType.Warning);
 			}
 
 
